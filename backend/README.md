@@ -37,12 +37,10 @@ Key variables used by the backend:
 - Development: endpoints accept `wallet` in request bodies for convenience.
 - Production: require MetaMask signature verification (nonce + signed message) and issue a short-lived token to prove wallet ownership — prevents impersonation.
 
-Detailed flow and security rationale are in `things.txt`.
-
 ---
 
 ## 🔎 Primary Endpoints
-All endpoints accept/return JSON. Use Postman collection (`postmanexample.txt`) for quick import.
+All endpoints accept/return JSON.
 
 ### POST /api/search  ⚡
 - Purpose: Enrich a LinkedIn profile, generate an AI opener, deduct 1 credit (if `wallet` provided), and record history.
@@ -128,7 +126,7 @@ Response example:
 ---
 
 ## 🧪 Postman / Integration
-We primarily use Postman. Import the `postmanexample.txt` collection in this folder — it contains ready-made requests and example payloads.
+We primarily use Postman. Create requests using the example payloads above; contact the backend team if you want an exported Postman collection.
 
 Tip: For development, use the FullEnrich test profile: `https://www.linkedin.com/in/demoge/` to avoid consuming credits.
 
@@ -138,7 +136,7 @@ Tip: For development, use the FullEnrich test profile: `https://www.linkedin.com
 - Atomic credit deduction to prevent race conditions: `findOneAndUpdate({ wallet, credits: { $gte: 1 } }, { $inc: { credits: -1 } })`.
 - Gemini / FullEnrich integrations are optional and mocked when API keys are not provided.
 
-See `things.txt` for full implementation details and security guidance.
+Contact the backend team for full implementation details and security guidance.
 
 ---
 
@@ -148,58 +146,6 @@ See `things.txt` for full implementation details and security guidance.
 - Create a tiny admin UI for credit top-ups.
 
 If you'd like any stylistic changes (more badges, an embedded SVG header, or GitHub Actions badges), tell me which and I'll add them.
-
-
-Quick start
-- Install and run the dev server:
-
-```bash
-cd backend
-npm install
-npm run dev
-```
-
-Environment variables
-- `MONGODB_URI` — MongoDB connection string.
-- `FULLENRICH_API_KEY` — FullEnrich API key (optional; mocks used if absent).
-- `GEMINI_API_KEY` — Gemini/GCP API key for AI generation (optional; mocks used if absent).
-- `GEMINI_MODEL` — Optional model name (default: `gemini-3-flash-preview`).
-- `SIGNUP_BONUS_CREDITS` — Free credits granted to new wallets (default: `3`).
-- `FRONTEND_ORIGIN` — Allowed frontend origin for CORS (comma-separated list).
-
-Authentication
-- Development: wallet addresses are accepted in request bodies for convenience.
-- Production recommendation: require MetaMask signature-based sign-in (prove wallet ownership) and issue a short-lived token. This prevents impersonation and is required for any wallet-sensitive endpoints in production.
-
-Primary endpoints
-- POST `/api/search`
-	- Body: `{ "linkedinUrl": "https://www.linkedin.com/in/username", "wallet": "0xUSERWALLET" }`
-	- Purpose: Enrich LinkedIn profile, generate AI opener, deduct 1 credit (if `wallet` provided), record history.
-	- Success: 200 `{ data: { id, linkedinUrl, fullName, jobTitle, companyName, email, phone, opener, geminiModel, geminiUsageSummary, openerHistory } }`
-	- Errors: 400 (invalid input), 402 (insufficient credits), 500 (server error).
-
-- POST `/api/search/regenerate`
-	- Body: `{ "id": "<searchResultId>", "wallet": "0xUSERWALLET" }`
-	- Purpose: Regenerate the AI opener for an existing result (costs 1 credit when `wallet` is provided).
-
-- GET `/api/credits/:wallet`
-	- Purpose: Return credit balance for `wallet`. Creates wallet with signup bonus if absent.
-
-- GET `/api/history/:wallet` — Return lightweight search history entries for `wallet`.
-- GET `/api/badges/:wallet` — Return badges for `wallet`.
-- GET `/api/reputation/:wallet` — Return reputation for `wallet`.
-
-- POST `/api/buy-credits`
-	- Body: `{ "wallet": "0xUSERWALLET", "amount": 5 }`
-	- Purpose: Add credits to a wallet after payment confirmation.
-
-Admin / manual endpoints (protect in production)
-- POST `/api/deduct` — Manually deduct credits: `{ wallet, amount }`.
-- POST `/api/record` — Manually record a search into wallet history.
-
-Rate limits
-- `/api/search`: default 10 requests/min per wallet (falls back to IP when wallet not provided).
-- `/api/search/regenerate`: default 5 requests/min per wallet.
 
 Signup bonus & testing
 - New wallets receive `SIGNUP_BONUS_CREDITS` on first access.
