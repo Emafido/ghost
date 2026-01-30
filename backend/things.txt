@@ -1,0 +1,20 @@
+## Why MetaMask Sign-In (Signature Verification) Matters
+
+Without MetaMask sign-in (signature verification), your backend cannot verify that a request is truly coming from the owner of a wallet address. This creates several security risks:
+
+### 1. Impersonation Risk
+- Anyone can send requests to your API using any wallet address, even if they do not own that wallet.
+- The backend, without signature verification, cannot distinguish between the real wallet owner and an attacker.
+
+### 2. Exploitation Scenarios
+- Attackers can claim signup bonuses or credits by pretending to be new wallets.
+- They can spend credits or access data as another user by submitting someone else’s wallet address.
+- Any endpoint that relies on wallet ownership can be abused.
+
+### 3. Real-World Example
+- If your API allows buying credits or accessing premium features by wallet address, a hacker could use another person’s address to get those features or drain their credits.
+
+### 4. Solution: Signature Verification
+- MetaMask sign-in requires the user to sign a unique message (nonce) with their wallet.
+- The backend verifies the signature, proving the user controls the wallet.
+- This prevents impersonation and ensures only the true wallet owner can act as that wallet.

@@ -1,0 +1,139 @@
+# Postman Examples for Ghost Backend
+
+## POST /api/search
+
+- URL: http://localhost:5000/api/search
+- Method: POST
+- Body (JSON):
+{
+  "linkedinUrl": "https://www.linkedin.com/in/chinomso-nduoma-5176673a0"
+}
+- Response: Returns enriched lead data and AI opener.
+
+---
+
+## POST /api/search/regenerate
+
+- URL: http://localhost:5000/api/search/regenerate
+- Method: POST
+- Body (JSON):
+{
+  "id": "<searchResultId>"  // Use the _id from the /api/search response
+}
+- Response: Returns updated lead data with new AI opener and updated openerHistory.
+
+---
+
+## Blockchain mock endpoints (for frontend/testing)
+
+- GET /api/credits/:wallet
+- URL example: http://localhost:5000/api/credits/0xTESTWALLET
+- Response: { "wallet": "0xTESTWALLET", "balance": 10 }
+
+- GET /api/history/:wallet
+- URL example: http://localhost:5000/api/history/0xTESTWALLET
+- Response: { "wallet": "0xTESTWALLET", "history": [...] }
+
+- GET /api/badges/:wallet
+- URL example: http://localhost:5000/api/badges/0xTESTWALLET
+- Response: { "wallet": "0xTESTWALLET", "badges": [...] }
+
+- GET /api/reputation/:wallet
+- URL example: http://localhost:5000/api/reputation/0xTESTWALLET
+- Response: { "wallet": "0xTESTWALLET", "reputation": { "score": 72 } }
+
+- POST /api/deduct
+- Body: { "wallet": "0xTESTWALLET", "amount": 1 }
+- Response: Updated balance
+
+- POST /api/record
+- Body: { "wallet": "0xTESTWALLET", "search": { "id": "...", "linkedinUrl": "..." } }
+- Response: { recorded: true }
+
+- POST /api/buy-credits
+- Body: { "wallet": "0xTESTWALLET", "amount": 5 }
+- Response: { "wallet": "0xTESTWALLET", "balance": 15 }
+
+---
+
+## Quick Integration Examples
+
+- Search (single call handles deduction & record):
+
+  - Request:
+    - POST /api/search
+    - Body: { "linkedinUrl": "https://www.linkedin.com/in/demoge/", "wallet": "0xUSERWALLET" }
+
+  - Response: { data: { id, linkedinUrl, fullName, jobTitle, companyName, email, phone, opener, geminiModel, geminiUsageSummary, openerHistory } }
+
+- Regenerate opener (costs 1 credit):
+
+  - Request:
+    - POST /api/search/regenerate
+    - Body: { "id": "<searchResultId>", "wallet": "0xUSERWALLET" }
+
+  - Response: { data: { ...updated search result... } }
+
+- Buy credits (call after payment confirmed):
+
+  - Request:
+    - POST /api/buy-credits
+    - Body: { "wallet": "0xUSERWALLET", "amount": 5 }
+
+  - Response: { "wallet": "0xUSERWALLET", "balance": <newBalance> }
+
+---
+
+## Testing tips
+
+- Use the FullEnrich test contact for free enrichment during development:
+  - LinkedIn: https://www.linkedin.com/in/demoge/
+  - This contact is hard-coded to use 0 credits in FullEnrich and is ideal for testing.
+
+- Rate limits:
+  - POST /api/search: 10 requests per minute per wallet (fallback to IP)
+  - POST /api/search/regenerate: 5 requests per minute per wallet
+
+---
+
+## Notes
+- The signup bonus (default 3 credits) is granted to new wallets on first access. Configure with `SIGNUP_BONUS_CREDITS` in `.env`.
+- The backend uses atomic DB operations to deduct credits safely and refunds them automatically on failures.
+- For production, integrate payments or on-chain contract calls before calling `POST /api/buy-credits`.
+
+---
+
+## Notes
+- Set Content-Type: application/json in headers.
+- For /api/search/regenerate, first call /api/search and copy the returned _id.
+- Both endpoints return a data object with all lead and opener details.
+
+
+Workflow
+
+User connects wallet
+
+(Frontend: Connects MetaMask, gets wallet address)
+Frontend fetches and displays credits, badges, reputation, and history using the GET endpoints.
+
+✅ GET /api/credits/:wallet
+✅ GET /api/badges/:wallet
+✅ GET /api/reputation/:wallet
+✅ GET /api/history/:wallet
+User performs a search
+
+✅ Frontend calls POST /api/search with the LinkedIn URL and wallet
+Backend:
+
+✅ Checks credits in DB before proceeding (/api/search)
+✅ Fetches enrichment data from FullEnrich (internal)
+✅ Generates a personalized opener with Gemini (internal)
+✅ Saves the full result in the SearchResult collection (internal)
+✅ Deducts a credit (handled inside /api/search)
+✅ Records the search in wallet history (handled inside /api/search)
+✅ Returns the enriched data and opener to the frontend (/api/search response)
+(No longer needed)
+
+❌ After a successful search, the frontend (or backend) calls POST /api/deduct
+❌ After a successful search, the frontend (or backend) calls POST /api/record
+All steps are now handled automatically by the backend in the /api/search endpoint. The frontend only needs to call /api/search; no need to call /api/deduct or /api/record separately.
