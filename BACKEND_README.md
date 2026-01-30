@@ -34,18 +34,11 @@ Key variables used by the backend:
 | Variable | Purpose | Default / Notes |
 |---|---|---|
 | `MONGODB_URI` | MongoDB connection string | required in prod |
-| `FULLENRICH_API_KEY` | FullEnrich profile enrichment | optional — mock used if absent |
-| `GEMINI_API_KEY` | Gemini AI key (`@google/genai`) | optional — mock used if absent |
+| `FULLENRICH_API_KEY` | FullEnrich profile enrichment | optional, mock used if absent |
+| `GEMINI_API_KEY` | Gemini AI key (`@google/genai`) | optional, mock used if absent |
 | `GEMINI_MODEL` | Gemini model selection | `gemini-3-flash-preview` |
 | `SIGNUP_BONUS_CREDITS` | Free credits for new wallets | `3` |
 | `FRONTEND_ORIGIN` | CORS allowed origins (comma-separated) | `http://localhost:3000` |
-
----
-
-## 🔐 Authentication (recommended)
-
-- Development: endpoints accept `wallet` in request bodies for convenience.
-- Production: require MetaMask signature verification (nonce + signed message) and issue a short-lived token to prove wallet ownership — prevents impersonation.
 
 ---
 
@@ -54,7 +47,6 @@ All endpoints accept/return JSON.
 
 ### POST /api/search  ⚡
 - Purpose: Enrich a LinkedIn profile, generate an AI opener, deduct 1 credit (if `wallet` provided), and record history.
-- Auth: optional `wallet` (address). Production should verify signature.
 - Request body:
 
 ```json
@@ -134,7 +126,7 @@ Response example:
 
 ---
 
-### Admin / Manual (PROTECT these in production)
+### Admin / Manual
 - POST `/api/deduct` — Manually deduct credits: `{ wallet, amount }`.
 - POST `/api/record` — Manually push an entry to a wallet's history.
 
