@@ -40,7 +40,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-/backend/node_modules/
-/backend/things.txt/
-/backend/postmanexample.txt/
-/backend/.env/
+/backend
