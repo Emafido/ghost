@@ -54,8 +54,7 @@ All endpoints accept/return JSON.
 }
 ```
 
-- Development note: Calling `/api/search` with the FullEnrich test profile `https://www.linkedin.com/in/demoge/` returns sample enrichment data and does not deduct credits. Use this URL when testing to avoid consuming user credits.
- - Development note: The FullEnrich test profile `https://www.linkedin.com/in/demoge/` returns sample enrichment data and FullEnrich does not count this request against their usage. The Ghost backend is specifically configured so calling `/api/search` with this exact URL will not deduct credits from wallets (it is a free test path). Use this URL when testing to avoid consuming user credits.
+ - Development note: The test profile at `https://www.linkedin.com/in/demoge/` is always free from FullEnrich's side (no API usage is counted), but Ghost will still deduct one credit per `/api/search` call by default.
 
 - Success (200):
 
