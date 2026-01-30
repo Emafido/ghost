@@ -56,8 +56,6 @@ All endpoints accept/return JSON.
 }
 ```
 
- - Note: In production use the Render base URL `https://ghost-intel-backend.onrender.com` (for example `https://ghost-intel-backend.onrender.com/api/search`).
-
  - Development note: The test profile at `https://www.linkedin.com/in/demoge/` is always free from FullEnrich's side (no API usage is counted), but Ghost will still deduct one credit per `/api/search` call by default.
 
 - Success (200):
