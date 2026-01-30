@@ -49,8 +49,8 @@ All endpoints accept/return JSON.
 
 ```json
 {
-	"linkedinUrl": "https://www.linkedin.com/in/username",
-	"wallet": "0xUSERWALLET"
+	"linkedinUrl": "https://www.linkedin.com/in/demoge/",
+	"wallet": "0xTESTWALLET"
 }
 ```
 
@@ -59,16 +59,23 @@ All endpoints accept/return JSON.
 ```json
 {
 	"data": {
-		"id": "642...",
-		"linkedinUrl": "https://...",
-		"fullName": "Jane Doe",
-		"jobTitle": "Senior Engineer",
-		"companyName": "Acme Inc",
-		"email": "jane@acme.com",
-		"phone": "+1-555-0100",
-		"opener": "Hi Jane — I enjoyed your recent post about...",
+		"id": "697c50ceda4a0b5f8f6a42ea",
+		"linkedinUrl": "https://www.linkedin.com/in/demoge/",
+		"fullName": "Grégoire Demoge",
+		"jobTitle": "Co-founder",
+		"companyName": "FullEnrich",
+		"email": "greg@fullenrich.com",
+		"phone": "+33 6 12 34 56 78",
+		"opener": "I’ve been following FullEnrich's growth and love how you’re simplifying the data waterfall process for modern sales teams.",
 		"geminiModel": "gemini-3-flash-preview",
-		"geminiUsageSummary": { "totalTokenCount": 123 }
+		"geminiUsageSummary": { "totalTokenCount": 608 },
+		"openerHistory": [
+			{
+				"text": "I’ve been following FullEnrich's growth and love how you’re simplifying the data waterfall process for modern sales teams.",
+				"createdAt": "2026-01-30T06:33:50.982Z",
+				"geminiModel": "gemini-3-flash-preview"
+			}
+		]
 	}
 }
 ```
