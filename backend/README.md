@@ -55,6 +55,7 @@ All endpoints accept/return JSON.
 ```
 
 - Development note: Calling `/api/search` with the FullEnrich test profile `https://www.linkedin.com/in/demoge/` returns sample enrichment data and does not deduct credits. Use this URL when testing to avoid consuming user credits.
+ - Development note: The FullEnrich test profile `https://www.linkedin.com/in/demoge/` returns sample enrichment data and FullEnrich does not count this request against their usage. The Ghost backend is specifically configured so calling `/api/search` with this exact URL will not deduct credits from wallets (it is a free test path). Use this URL when testing to avoid consuming user credits.
 
 - Success (200):
 
@@ -141,10 +142,6 @@ Response example:
 - Deduction is atomic: the backend only decrements a credit when one is available to prevent race conditions. If enrichment or generation fails, the credit is refunded.
 - Use `GET /api/credits/:wallet` to read the current balance and `POST /api/buy-credits` to top up after payment confirmation (server should verify payment before calling this endpoint).
 - Frontend UX tips: always fetch and display the user's credit balance, handle HTTP `402` by routing users to the buy-credits flow, and show clear messages when operations are free (see testing note below).
-
-
-## 🧪 Postman / Integration
-We primarily use Postman. Create requests using the example payloads above.
 
 ---
 
