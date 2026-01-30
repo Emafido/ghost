@@ -54,6 +54,8 @@ All endpoints accept/return JSON.
 }
 ```
 
+- Development note: Calling `/api/search` with the FullEnrich test profile `https://www.linkedin.com/in/demoge/` returns sample enrichment data and does not deduct credits. Use this URL when testing to avoid consuming user credits.
+
 - Success (200):
 
 ```json
@@ -132,18 +134,17 @@ Response example:
 
 ---
 
+## 🎁 Signup Bonus & Credits
+
+- New wallets are created on first access (for example when calling `/api/credits/:wallet`, `/api/history/:wallet`, or any endpoint passing `wallet`) and automatically receive `SIGNUP_BONUS_CREDITS` (default: `3`).
+- Credits are consumed when a `wallet` is provided to credit-using endpoints: `POST /api/search` and `POST /api/search/regenerate` deduct 1 credit each.
+- Deduction is atomic: the backend only decrements a credit when one is available to prevent race conditions. If enrichment or generation fails, the credit is refunded.
+- Use `GET /api/credits/:wallet` to read the current balance and `POST /api/buy-credits` to top up after payment confirmation (server should verify payment before calling this endpoint).
+- Frontend UX tips: always fetch and display the user's credit balance, handle HTTP `402` by routing users to the buy-credits flow, and show clear messages when operations are free (see testing note below).
+
+
 ## 🧪 Postman / Integration
-We primarily use Postman. Create requests using the example payloads above; contact the backend team if you want an exported Postman collection.
-
-Tip: For development, use the FullEnrich test profile: `https://www.linkedin.com/in/demoge/` to avoid consuming credits.
-
----
-
-## ⚙️ Implementation notes (short)
-- Atomic credit deduction to prevent race conditions: `findOneAndUpdate({ wallet, credits: { $gte: 1 } }, { $inc: { credits: -1 } })`.
-- Gemini / FullEnrich integrations are optional and mocked when API keys are not provided.
-
-Contact the backend team for full implementation details and security guidance.
+We primarily use Postman. Create requests using the example payloads above.
 
 ---
 
@@ -153,8 +154,4 @@ Contact the backend team for full implementation details and security guidance.
 - Create a tiny admin UI for credit top-ups.
 
 If you'd like any stylistic changes (more badges, an embedded SVG header, or GitHub Actions badges), tell me which and I'll add them.
-
-Signup bonus & testing
-- New wallets receive `SIGNUP_BONUS_CREDITS` on first access.
-- Use the FullEnrich test profile when developing: `https://www.linkedin.com/in/demoge/`.
 
