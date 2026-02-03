@@ -8,6 +8,11 @@ import { Search, Copy, Zap, ShieldCheck, Mail, Globe, Sparkles, CheckCircle2, Wa
 const API_BASE = "https://ghost-intel-backend.onrender.com/api";
 
 // Types based on the Backend README
+interface OpenerHistoryItem {
+  opener: string;
+  timestamp?: string;
+}
+
 interface BackendResponse {
   data: {
     fullName: string;
@@ -16,7 +21,7 @@ interface BackendResponse {
     email: string;
     phone: string;
     opener: string;
-    openerHistory: any[];
+    openerHistory: OpenerHistoryItem[];
   };
 }
 
@@ -80,7 +85,7 @@ export default function GhostIntel() {
       // Step 3: Refresh Credits (since 1 was just used)
       fetchCredits();
 
-    } catch (err: any) {
+    } catch (err: AxiosError | unknown) {
       // Handle Errors based on README
       if (axios.isAxiosError(err) && err.response) {
         if (err.response.status === 402) {
@@ -281,7 +286,7 @@ export default function GhostIntel() {
                  <div className="mb-8">
                    <h4 className="text-gray-500 text-xs font-bold uppercase mb-4 tracking-wider">Icebreaker Strategy</h4>
                    <p className="text-xl md:text-2xl font-medium leading-relaxed text-white italic">
-                     "{result.opener}"
+                     &quot;{result.opener}&quot;
                    </p>
                  </div>
                </div>
