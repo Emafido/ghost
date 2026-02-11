@@ -39,6 +39,10 @@ Key variables used by the backend:
 | `GEMINI_MODEL` | Gemini model selection | `gemini-3-flash-preview` |
 | `SIGNUP_BONUS_CREDITS` | Free credits for new wallets | `3` |
 | `FRONTEND_ORIGIN` | CORS allowed origins (comma-separated) | `http://localhost:3000` |
+| `GHOSTCREDITS_ADDRESS` | GhostCredits contract address | set after deployment |
+| `GHOSTNFT_ADDRESS` | GhostNFT contract address | set after deployment |
+| `ADMIN_PRIVATE_KEY` | Private key for admin txs | keep secret |
+| `ADMIN_API_KEY` | API key protecting admin endpoints | keep secret |
 
 ---
 
@@ -51,8 +55,8 @@ All endpoints accept/return JSON.
 
 ```json
 {
-    "linkedinUrl": "https://www.linkedin.com/in/demoge/",
-    "wallet": "0xTESTWALLET"
+        "linkedinUrl": "https://www.linkedin.com/in/demoge/",
+        "wallet": "0xTESTWALLET"
 }
 ```
 
@@ -62,25 +66,25 @@ All endpoints accept/return JSON.
 
 ```json
 {
-    "data": {
-        "id": "697c50ceda4a0b5f8f6a42ea",
-        "linkedinUrl": "https://www.linkedin.com/in/demoge/",
-        "fullName": "Grégoire Demoge",
-        "jobTitle": "Co-founder",
-        "companyName": "FullEnrich",
-        "email": "greg@fullenrich.com",
-        "phone": "+33 6 12 34 56 78",
-        "opener": "I’ve been following FullEnrich's growth and love how you’re simplifying the data waterfall process for modern sales teams.",
-        "geminiModel": "gemini-3-flash-preview",
-        "geminiUsageSummary": { "totalTokenCount": 608 },
-        "openerHistory": [
-            {
-                "text": "I’ve been following FullEnrich's growth and love how you’re simplifying the data waterfall process for modern sales teams.",
-                "createdAt": "2026-01-30T06:33:50.982Z",
-                "geminiModel": "gemini-3-flash-preview"
-            }
-        ]
-    }
+        "data": {
+                "id": "697c50ceda4a0b5f8f6a42ea",
+                "linkedinUrl": "https://www.linkedin.com/in/demoge/",
+                "fullName": "Grégoire Demoge",
+                "jobTitle": "Co-founder",
+                "companyName": "FullEnrich",
+                "email": "greg@fullenrich.com",
+                "phone": "+33 6 12 34 56 78",
+                "opener": "I’ve been following FullEnrich's growth and love how you’re simplifying the data waterfall process for modern sales teams.",
+                "geminiModel": "gemini-3-flash-preview",
+                "geminiUsageSummary": { "totalTokenCount": 608 },
+                "openerHistory": [
+                        {
+                                "text": "I’ve been following FullEnrich's growth and love how you’re simplifying the data waterfall process for modern sales teams.",
+                                "createdAt": "2026-01-30T06:33:50.982Z",
+                                "geminiModel": "gemini-3-flash-preview"
+                        }
+                ]
+        }
 }
 ```
 
@@ -143,3 +147,51 @@ Response example:
 - Deduction is atomic: the backend only decrements a credit when one is available to prevent race conditions. If enrichment or generation fails, the credit is refunded.
 - Use `GET /api/credits/:wallet` to read the current balance and `POST /api/buy-credits` to top up after payment confirmation (server should verify payment before calling this endpoint).
 - Frontend UX tips: always fetch and display the user's credit balance, handle HTTP `402` by routing users to the buy-credits flow, and show clear messages when operations are free (see testing note below).
+
+---
+
+## 🔗 Blockchain Integration (Admin)
+
+This backend exposes admin endpoints to manage the on-chain `GhostCredits` contract. These endpoints are protected by an API key (`ADMIN_API_KEY`) and intended for trusted admin use only.
+
+- Configuration: set contract addresses and keys in `.env`:
+    - `GHOSTCREDITS_ADDRESS` — GhostCredits contract address
+    - `GHOSTNFT_ADDRESS` — GhostNFT contract address
+    - `ADMIN_PRIVATE_KEY` — private key used for signing admin transactions (keep secret)
+    - `ADMIN_API_KEY` — short-lived API key for protecting admin endpoints
+
+- Admin endpoints (mounted at `/api/admin`):
+    - `POST /api/admin/pause` — pause contract (owner-only)
+    - `POST /api/admin/unpause` — unpause contract (owner-only)
+    - `POST /api/admin/set-credits-per-eth` — `{ value }` set credits/ETH
+    - `POST /api/admin/set-credits-per-usdc` — `{ value }` set credits/USDC
+    - `POST /api/admin/set-nft-contract` — `{ address }` set the NFT contract address used by Credits
+    - `POST /api/admin/set-referral-bonus` — `{ percent }` set referral bonus percent
+    - `POST /api/admin/withdraw-eth` — withdraw contract ETH balance
+    - `POST /api/admin/withdraw-usdc` — withdraw contract USDC balance
+    - `POST /api/admin/transfer-ownership` — `{ newOwner }` transfer ownership (use direct address)
+    - `POST /api/admin/renounce-ownership` — renounce ownership (irreversible)
+
+- Security notes:
+    - Admin endpoints require the header `Authorization: Bearer <ADMIN_API_KEY>`.
+    - Never expose `ADMIN_PRIVATE_KEY` to client-side code.
+    - `renounceOwnership` is irreversible — do not call unless intentional.
+
+## 🪪 GhostNFT (badge) integration notes
+
+- The `GhostNFT` contract in the repo mints badges only when called by the `GhostCredits` contract. Users cannot mint directly.
+- Frontend responsibilities:
+    - Read-only interactions (display badges, metadata) should be performed directly from the frontend using the `GhostNFT` ABI and `GHOSTNFT_ADDRESS`.
+    - Examples: call `getBadgesOfOwner`, `getBadgeDetails`, `tokenURI` from the client.
+- Backend responsibilities (optional):
+    - Provide admin endpoints to call owner-only functions such as `setCreditsContract` and `setBaseURI` if you want centralized admin control through the backend.
+    - If you add those endpoints, protect them with `ADMIN_API_KEY` and server-side signing using `ADMIN_PRIVATE_KEY`.
+
+## ✅ Redeploy / Update checklist
+
+1. When contracts are redeployed, update `.env` `GHOSTCREDITS_ADDRESS` and `GHOSTNFT_ADDRESS` with the new addresses.
+2. If the contract ABI changed, replace the ABI JSON files in `backend/contracts/` and in the frontend.
+3. Restart the backend service after `.env` changes.
+4. Verify admin endpoints (pause/unpause, set-*, withdraw) against the new deployment before running irreversible actions.
+
+If you want, I can add example cURL and PowerShell snippets showing how to call the admin endpoints.
