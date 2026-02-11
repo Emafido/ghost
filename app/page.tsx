@@ -325,7 +325,7 @@ export default function GhostIntel() {
                  </div>
                  <div className="mb-8">
                    <h4 className="text-gray-500 text-xs font-bold uppercase mb-4 tracking-wider">Icebreaker Strategy</h4>
-                   <p className="text-xl md:text-2xl font-medium leading-relaxed text-white italic">"{result.opener}"</p>
+                   <p className="text-xl md:text-2xl font-medium leading-relaxed text-white italic">&quot;{result.opener}&quot;</p>
                  </div>
                </div>
                <button onClick={() => navigator.clipboard.writeText(result.opener)}
