@@ -1,6 +1,8 @@
 // app/constants.ts
 
-export const GHOST_CREDITS_ADDRESS = "0xc2a921b0a86109e6337a565172a92b2edc110e18"; // Base Sepolia
+// 1. Deployed Addresses (from run-latest.json)
+// Network: Base Sepolia (Chain ID: 84532)
+export const GHOST_CREDITS_ADDRESS = "0x592818F05E5EbA208D1A58E7d382D74171ee19a9";
 export const GHOST_NFT_ADDRESS = "0x6091f4ff7dc215830d0b7b83d67bbe9096b95601";
 export const USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e"; // Base Sepolia USDC
 
