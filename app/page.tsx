@@ -1,7 +1,15 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import axios, { AxiosError } from "axios";
-import { useAccount, useConnect, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { 
+  useAccount, 
+  useConnect, 
+  useReadContract, 
+  useWriteContract, 
+  useWaitForTransactionReceipt,
+  useChainId,
+  useSwitchChain 
+} from "wagmi";
 import { parseEther } from "viem";
 import { Search, Copy, Zap, Mail, Globe, Sparkles, CheckCircle2, Wallet, History, AlertCircle, User, Trophy, Users, X } from "lucide-react";
 import { GHOST_CREDITS_ADDRESS } from "./constants";
@@ -14,12 +22,10 @@ type ReputationResult = readonly [bigint, bigint];
 type ReferralResult = readonly [string, bigint, string]; 
 
 const GHOST_CREDITS_ABI = [
-  // Read
   { inputs: [{ name: "user", type: "address" }], name: "getCredits", outputs: [{ name: "", type: "uint256" }], stateMutability: "view", type: "function" },
   { inputs: [{ name: "user", type: "address" }], name: "getReputation", outputs: [{ name: "score", type: "uint256" }, { name: "level", type: "uint256" }], stateMutability: "view", type: "function" },
   { inputs: [{ name: "user", type: "address" }], name: "getReferralInfo", outputs: [{ name: "code", type: "string" }, { name: "count", type: "uint256" }, { name: "referrer", type: "address" }], stateMutability: "view", type: "function" },
   { inputs: [{ name: "user", type: "address" }], name: "getSearchCount", outputs: [{ name: "", type: "uint256" }], stateMutability: "view", type: "function" },
-  // Write
   { inputs: [], name: "purchaseCreditsETH", outputs: [], stateMutability: "payable", type: "function" },
   { inputs: [{ name: "code", type: "string" }], name: "createReferralCode", outputs: [], stateMutability: "nonpayable", type: "function" },
   { inputs: [{ name: "code", type: "string" }], name: "useReferralCode", outputs: [], stateMutability: "nonpayable", type: "function" },
@@ -37,17 +43,22 @@ interface BackendResponse {
 }
 
 export default function GhostIntel() {
-  // 1. Fix Hydration Error: Track if component is mounted
+  // 1. Hydration Fix
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // 2. Web3 Hooks
+  // 2. Web3 Hooks & Network Checks
   const { address, isConnected } = useAccount();
   const { connect, connectors } = useConnect();
   const { writeContract, data: hash, isPending: isTxPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
+  
+  // Base Sepolia Network Logic
+  const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
+  const isWrongNetwork = chainId !== 84532; // 84532 is Base Sepolia
 
   // 3. READ: Get Credits & Profile Data
   const { data: creditBalance, refetch: refetchCredits } = useReadContract({
@@ -101,6 +112,11 @@ export default function GhostIntel() {
     if (!url) return;
     if (!isConnected || !address) {
       alert("Please connect your wallet first!");
+      return;
+    }
+    if (isWrongNetwork) {
+      alert("Please switch to Base Sepolia Network first.");
+      if (switchChain) switchChain({ chainId: 84532 });
       return;
     }
     
@@ -176,8 +192,8 @@ export default function GhostIntel() {
   return (
     <main className="min-h-screen bg-[#050505] text-white selection:bg-blue-500/30 overflow-hidden relative font-sans">
       
-      {/* Background Ambience */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-blue-600/10 blur-[120px] rounded-full pointer-events-none" />
+      {/* Background Ambience - Tailwind v4 classes applied */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-200 h-100 bg-blue-600/10 blur-[120px] rounded-full pointer-events-none" />
 
       {/* Navbar */}
       <nav className="relative z-10 max-w-7xl mx-auto flex justify-between items-center py-8 px-6 border-b border-white/5">
@@ -185,7 +201,7 @@ export default function GhostIntel() {
           <div className="bg-blue-600 p-2 rounded-lg shadow-[0_0_15px_rgba(37,99,235,0.5)]">
             <Zap className="w-5 h-5 text-white fill-current" />
           </div>
-          <span className="text-xl font-black tracking-widest uppercase bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+          <span className="text-xl font-black tracking-widest uppercase bg-clip-text text-transparent bg-linear-to-r from-white to-gray-400">
             Ghost Intel
           </span>
         </div>
@@ -207,13 +223,22 @@ export default function GhostIntel() {
                 </button>
               </div>
               
+              {/* Profile Button - Now shows Red if wrong network */}
               <button 
-                onClick={() => setShowProfileModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-[#111] rounded-full border border-white/10 hover:bg-white/5 transition"
+                onClick={() => {
+                  if (isWrongNetwork && switchChain) {
+                    switchChain({ chainId: 84532 });
+                  } else {
+                    setShowProfileModal(true);
+                  }
+                }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full border transition ${
+                  isWrongNetwork ? "bg-red-500/10 border-red-500/30 text-red-400" : "bg-[#111] border-white/10 hover:bg-white/5"
+                }`}
               >
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-xs font-mono text-gray-400">
-                  {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : ""}
+                <div className={`w-2 h-2 rounded-full animate-pulse ${isWrongNetwork ? "bg-red-500" : "bg-green-500"}`} />
+                <span className="text-xs font-mono">
+                  {isWrongNetwork ? "Wrong Network" : address ? `${address.slice(0, 6)}...${address.slice(-4)}` : ""}
                 </span>
               </button>
             </>
@@ -233,7 +258,7 @@ export default function GhostIntel() {
       <section className="relative z-10 max-w-3xl mx-auto mt-20 px-6 text-center">
         <div className="space-y-6 mb-12">
           <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-white mb-4">
-            Total <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">Recall</span>
+            Total <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-indigo-500">Recall</span>
           </h1>
           <p className="text-gray-400 text-lg max-w-xl mx-auto leading-relaxed">
             Instant lead enrichment powered by <span className="text-white font-bold">FullEnrich</span> & <span className="text-white font-bold">Gemini AI</span>.
@@ -241,9 +266,8 @@ export default function GhostIntel() {
           </p>
         </div>
 
-        {/* Input Field */}
         <div className="relative group max-w-2xl mx-auto">
-          <div className={`absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500 ${isSearching ? 'opacity-50 animate-pulse' : ''}`}></div>
+          <div className={`absolute -inset-0.5 bg-linear-to-r from-blue-500 to-indigo-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500 ${isSearching ? 'opacity-50 animate-pulse' : ''}`}></div>
           <div className="relative flex items-center bg-[#0a0a0a] rounded-2xl border border-white/10 shadow-2xl">
             <div className="pl-6 text-gray-500">
               <Search className="w-6 h-6" />
@@ -254,14 +278,14 @@ export default function GhostIntel() {
               className="w-full bg-transparent p-6 text-lg text-white placeholder:text-gray-700 focus:outline-none font-medium"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              disabled={isSearching}
+              disabled={isSearching || isWrongNetwork}
             />
             <div className="pr-2">
               <button 
                 onClick={handleSearch}
-                disabled={!url || isSearching}
+                disabled={!url || isSearching || isWrongNetwork}
                 className={`px-8 py-4 rounded-xl font-bold transition-all duration-300 ${
-                  url && !isSearching 
+                  url && !isSearching && !isWrongNetwork
                   ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.4)]' 
                   : 'bg-white/5 text-gray-500 cursor-not-allowed'
                 }`}
@@ -315,7 +339,7 @@ export default function GhostIntel() {
               </div>
             </div>
 
-            <div className="lg:col-span-7 bg-gradient-to-b from-blue-900/10 to-black border border-blue-500/20 p-8 rounded-3xl relative flex flex-col justify-between">
+            <div className="lg:col-span-7 bg-linear-to-b from-blue-900/10 to-black border border-blue-500/20 p-8 rounded-3xl relative flex flex-col justify-between">
                <div>
                  <div className="flex justify-between items-start mb-6">
                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-[10px] font-bold uppercase tracking-widest border border-blue-500/20">
@@ -325,6 +349,7 @@ export default function GhostIntel() {
                  </div>
                  <div className="mb-8">
                    <h4 className="text-gray-500 text-xs font-bold uppercase mb-4 tracking-wider">Icebreaker Strategy</h4>
+                   {/* ESLint Fix: Quotations are now properly escaped! */}
                    <p className="text-xl md:text-2xl font-medium leading-relaxed text-white italic">&quot;{result.opener}&quot;</p>
                  </div>
                </div>
@@ -349,10 +374,30 @@ export default function GhostIntel() {
               <h2 className="text-2xl font-bold text-white mb-2">Top Up Credits</h2>
               <p className="text-gray-400">0.001 ETH = 1 Credit</p>
             </div>
-            <button onClick={handleBuyCredits} disabled={isTxPending || isConfirming}
-              className="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-xl font-bold text-white transition-all disabled:opacity-50 flex justify-center items-center gap-2">
-              {isTxPending ? "Check Wallet..." : isConfirming ? "Confirming..." : "Confirm Purchase"}
+            
+            {/* Network Smart Button */}
+            <button 
+              onClick={() => {
+                if (isWrongNetwork && switchChain) {
+                  switchChain({ chainId: 84532 });
+                } else {
+                  handleBuyCredits();
+                }
+              }}
+              disabled={isTxPending || isConfirming}
+              className={`w-full py-4 rounded-xl font-bold text-white transition-all disabled:opacity-50 flex justify-center items-center gap-2 ${
+                isWrongNetwork ? "bg-red-600 hover:bg-red-500" : "bg-blue-600 hover:bg-blue-500"
+              }`}
+            >
+              {isWrongNetwork 
+                ? "⚠️ Switch to Base Sepolia" 
+                : isTxPending 
+                  ? "Check Wallet..." 
+                  : isConfirming 
+                    ? "Confirming..." 
+                    : "Confirm Purchase"}
             </button>
+
           </div>
         </div>
       )}
