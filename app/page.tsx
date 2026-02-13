@@ -7,7 +7,6 @@ import {
   useReadContract, 
   useWriteContract, 
   useWaitForTransactionReceipt,
-  useChainId,
   useSwitchChain 
 } from "wagmi";
 import { parseEther } from "viem";
@@ -49,16 +48,17 @@ export default function GhostIntel() {
     setMounted(true);
   }, []);
 
-  // 2. Web3 Hooks & Network Checks
-  const { address, isConnected } = useAccount();
+  // 2. Web3 Hooks & STRICT Network Checks
+  // 👇 Notice we now pull chainId directly from the wallet here
+  const { address, isConnected, chainId } = useAccount(); 
   const { connect, connectors } = useConnect();
   const { writeContract, data: hash, isPending: isTxPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
   
-  // Base Sepolia Network Logic
-  const chainId = useChainId();
   const { switchChain } = useSwitchChain();
-  const isWrongNetwork = chainId !== 84532; // 84532 is Base Sepolia
+  
+  // 👇 If connected, check if the wallet's actual ID matches Base Sepolia (84532)
+  const isWrongNetwork = isConnected && chainId !== 84532; 
 
   // 3. READ: Get Credits & Profile Data
   const { data: creditBalance, refetch: refetchCredits } = useReadContract({
@@ -192,7 +192,7 @@ export default function GhostIntel() {
   return (
     <main className="min-h-screen bg-[#050505] text-white selection:bg-blue-500/30 overflow-hidden relative font-sans">
       
-      {/* Background Ambience - Tailwind v4 classes applied */}
+      {/* Background Ambience */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-200 h-100 bg-blue-600/10 blur-[120px] rounded-full pointer-events-none" />
 
       {/* Navbar */}
@@ -207,7 +207,6 @@ export default function GhostIntel() {
         </div>
 
         <div className="flex items-center gap-4">
-          {/* Hydration Fix: Only show connected state if mounted on client */}
           {mounted && isConnected ? (
             <>
               <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-[#111] rounded-full border border-white/10">
@@ -215,15 +214,24 @@ export default function GhostIntel() {
                 <span className="text-sm font-bold text-white">
                   {creditBalance ? creditBalance.toString() : "0"} Credits
                 </span>
+                
+                {/* 👇 Navbar BUY button now forces a network switch if needed */}
                 <button 
-                  onClick={() => setShowBuyModal(true)}
-                  className="ml-2 text-xs bg-blue-600 px-2 py-0.5 rounded text-white font-bold hover:bg-blue-500 transition"
+                  onClick={() => {
+                    if (isWrongNetwork && switchChain) {
+                      switchChain({ chainId: 84532 });
+                    } else {
+                      setShowBuyModal(true);
+                    }
+                  }}
+                  className={`ml-2 text-xs px-2 py-0.5 rounded text-white font-bold transition-all ${
+                    isWrongNetwork ? "bg-red-600 hover:bg-red-500" : "bg-blue-600 hover:bg-blue-500"
+                  }`}
                 >
-                  + BUY
+                  {isWrongNetwork ? "⚠️ SWITCH" : "+ BUY"}
                 </button>
               </div>
               
-              {/* Profile Button - Now shows Red if wrong network */}
               <button 
                 onClick={() => {
                   if (isWrongNetwork && switchChain) {
@@ -290,7 +298,7 @@ export default function GhostIntel() {
                   : 'bg-white/5 text-gray-500 cursor-not-allowed'
                 }`}
               >
-                {isSearching ? 'Decrypting...' : 'Decrypt'}
+                {isWrongNetwork ? 'Wrong Network' : isSearching ? 'Decrypting...' : 'Decrypt'}
               </button>
             </div>
           </div>
@@ -349,7 +357,6 @@ export default function GhostIntel() {
                  </div>
                  <div className="mb-8">
                    <h4 className="text-gray-500 text-xs font-bold uppercase mb-4 tracking-wider">Icebreaker Strategy</h4>
-                   {/* ESLint Fix: Quotations are now properly escaped! */}
                    <p className="text-xl md:text-2xl font-medium leading-relaxed text-white italic">&quot;{result.opener}&quot;</p>
                  </div>
                </div>
@@ -375,7 +382,7 @@ export default function GhostIntel() {
               <p className="text-gray-400">0.001 ETH = 1 Credit</p>
             </div>
             
-            {/* Network Smart Button */}
+            {/* Modal Smart Button */}
             <button 
               onClick={() => {
                 if (isWrongNetwork && switchChain) {
