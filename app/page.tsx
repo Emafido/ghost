@@ -10,7 +10,7 @@ import {
   useSwitchChain 
 } from "wagmi";
 import { parseEther } from "viem";
-import { Search, Copy, Zap, Mail, Globe, Sparkles, CheckCircle2, Wallet, History, AlertCircle, User, Trophy, Users, X } from "lucide-react";
+import { Search, Copy, Zap, Mail, Globe, Sparkles, CheckCircle2, Wallet, History, AlertCircle, User, Trophy, Users, X, Target, Cpu, Shield } from "lucide-react";
 import { GHOST_CREDITS_ADDRESS } from "./constants";
 
 // 🌐 CONFIGURATION
@@ -42,25 +42,19 @@ interface BackendResponse {
 }
 
 export default function GhostIntel() {
-  // 1. Hydration Fix
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // 2. Web3 Hooks & STRICT Network Checks
-  // 👇 Notice we now pull chainId directly from the wallet here
   const { address, isConnected, chainId } = useAccount(); 
   const { connect, connectors } = useConnect();
   const { writeContract, data: hash, isPending: isTxPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
   
   const { switchChain } = useSwitchChain();
-  
-  // 👇 If connected, check if the wallet's actual ID matches Base Sepolia (84532)
   const isWrongNetwork = isConnected && chainId !== 84532; 
 
-  // 3. READ: Get Credits & Profile Data
   const { data: creditBalance, refetch: refetchCredits } = useReadContract({
     address: GHOST_CREDITS_ADDRESS,
     abi: GHOST_CREDITS_ABI,
@@ -95,7 +89,6 @@ export default function GhostIntel() {
   });
   const referralInfo = referralInfoRaw as ReferralResult | undefined;
 
-  // 4. Local State
   const [url, setUrl] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [loadingStep, setLoadingStep] = useState("");
@@ -107,7 +100,6 @@ export default function GhostIntel() {
   const [myNewCode, setMyNewCode] = useState("");
   const [friendCode, setFriendCode] = useState("");
 
-  // 5. Search Logic
   const handleSearch = async () => {
     if (!url) return;
     if (!isConnected || !address) {
@@ -190,13 +182,13 @@ export default function GhostIntel() {
   }, [isConfirmed, refetchCredits]);
 
   return (
-    <main className="min-h-screen bg-[#050505] text-white selection:bg-blue-500/30 overflow-hidden relative font-sans">
+    <main className="min-h-screen flex flex-col bg-[#050505] text-white selection:bg-blue-500/30 overflow-hidden relative font-sans">
       
       {/* Background Ambience */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-200 h-100 bg-blue-600/10 blur-[120px] rounded-full pointer-events-none" />
 
       {/* Navbar */}
-      <nav className="relative z-10 max-w-7xl mx-auto flex justify-between items-center py-8 px-6 border-b border-white/5">
+      <nav className="relative z-10 w-full max-w-7xl mx-auto flex justify-between items-center py-8 px-6 border-b border-white/5">
         <div className="flex items-center gap-3">
           <div className="bg-blue-600 p-2 rounded-lg shadow-[0_0_15px_rgba(37,99,235,0.5)]">
             <Zap className="w-5 h-5 text-white fill-current" />
@@ -214,8 +206,6 @@ export default function GhostIntel() {
                 <span className="text-sm font-bold text-white">
                   {creditBalance ? creditBalance.toString() : "0"} Credits
                 </span>
-                
-                {/* 👇 Navbar BUY button now forces a network switch if needed */}
                 <button 
                   onClick={() => {
                     if (isWrongNetwork && switchChain) {
@@ -263,19 +253,18 @@ export default function GhostIntel() {
       </nav>
 
       {/* Main Search Section */}
-      <section className="relative z-10 max-w-3xl mx-auto mt-20 px-6 text-center">
+      <section className="relative z-10 w-full max-w-4xl mx-auto mt-20 px-6 text-center">
         <div className="space-y-6 mb-12">
           <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-white mb-4">
-            Total <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-indigo-500">Recall</span>
+            Total <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-gray-400">Recall</span>
           </h1>
-          <p className="text-gray-400 text-lg max-w-xl mx-auto leading-relaxed">
-            Instant lead enrichment powered by <span className="text-white font-bold">FullEnrich</span> & <span className="text-white font-bold">Gemini AI</span>.
-            <span className="block mt-2 text-sm text-gray-500">Secured on Base Sepolia Network.</span>
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto leading-relaxed">
+            The decentralized intelligence layer for sales. Turn any LinkedIn profile into verified contact data and a Gemini AI-generated outreach strategy in seconds.
           </p>
         </div>
 
         <div className="relative group max-w-2xl mx-auto">
-          <div className={`absolute -inset-0.5 bg-linear-to-r from-blue-500 to-indigo-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500 ${isSearching ? 'opacity-50 animate-pulse' : ''}`}></div>
+          <div className={`absolute -inset-0.5 bg-linear-to-r from-gray-500 to-gray-700 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500 ${isSearching ? 'opacity-50 animate-pulse' : ''}`}></div>
           <div className="relative flex items-center bg-[#0a0a0a] rounded-2xl border border-white/10 shadow-2xl">
             <div className="pl-6 text-gray-500">
               <Search className="w-6 h-6" />
@@ -304,6 +293,41 @@ export default function GhostIntel() {
           </div>
         </div>
 
+        {/* --- EXPLANATORY SECTION --- */}
+        {!isSearching && !result && (
+          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 text-left animate-in fade-in duration-700">
+            <div className="bg-[#111]/50 border border-white/5 p-6 rounded-2xl">
+              <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center mb-4 border border-white/10">
+                <Target className="w-5 h-5 text-gray-300" />
+              </div>
+              <h3 className="text-white font-bold mb-2">1. Target a Lead</h3>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                Provide a standard LinkedIn URL. We don&apos;t need your account access or cookie sessions.
+              </p>
+            </div>
+
+            <div className="bg-[#111]/50 border border-white/5 p-6 rounded-2xl">
+              <div className="w-10 h-10 bg-blue-900/30 rounded-lg flex items-center justify-center mb-4 border border-blue-500/20">
+                <Cpu className="w-5 h-5 text-blue-400" />
+              </div>
+              <h3 className="text-white font-bold mb-2">2. Decrypt & Analyze</h3>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                FullEnrich extracts verified emails and numbers. Gemini 1.5 Pro analyzes their profile to craft the perfect icebreaker.
+              </p>
+            </div>
+
+            <div className="bg-[#111]/50 border border-white/5 p-6 rounded-2xl">
+              <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center mb-4 border border-white/10">
+                <Shield className="w-5 h-5 text-gray-300" />
+              </div>
+              <h3 className="text-white font-bold mb-2">3. Execute On-Chain</h3>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                Pay per decryption using ETH on Base Sepolia. Build on-chain reputation and earn NFTs as you scale your outreach.
+              </p>
+            </div>
+          </div>
+        )}
+
         {isSearching && (
           <div className="mt-12 flex flex-col items-center gap-4 animate-in fade-in duration-500">
             <div className="relative">
@@ -326,9 +350,9 @@ export default function GhostIntel() {
 
       {/* Results Dashboard */}
       {result && (
-        <section className="relative z-10 max-w-5xl mx-auto mt-24 px-6 pb-20 animate-in slide-in-from-bottom-10 fade-in duration-700">
+        <section className="relative z-10 w-full max-w-5xl mx-auto mt-16 px-6 pb-12 animate-in slide-in-from-bottom-10 fade-in duration-700">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-5 bg-[#111] border border-white/10 p-8 rounded-3xl relative overflow-hidden group hover:border-blue-500/30 transition-all">
+            <div className="lg:col-span-5 bg-[#111] border border-white/10 p-8 rounded-3xl relative overflow-hidden group hover:border-gray-500/30 transition-all">
               <div className="absolute top-0 right-0 p-4 opacity-10"><Globe className="w-32 h-32 text-white rotate-12" /></div>
               <div className="relative z-10">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/10 text-green-400 text-[10px] font-bold uppercase tracking-widest border border-green-500/20 mb-6">
@@ -336,10 +360,10 @@ export default function GhostIntel() {
                 </span>
                 <h3 className="text-3xl font-bold text-white mb-2">{result.fullName}</h3>
                 <p className="text-gray-400 text-lg mb-8">{result.jobTitle} <span className="text-gray-600">@</span> {result.companyName}</p>
-                <div className="flex justify-between items-center p-4 bg-black/50 border border-white/5 rounded-xl hover:border-blue-500/50 transition-colors cursor-pointer group/item"
+                <div className="flex justify-between items-center p-4 bg-black/50 border border-white/5 rounded-xl hover:border-gray-500/50 transition-colors cursor-pointer group/item"
                        onClick={() => navigator.clipboard.writeText(result.email)}>
                   <div className="flex items-center gap-4">
-                    <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400"><Mail className="w-5 h-5" /></div>
+                    <div className="p-2 bg-gray-800 rounded-lg text-gray-300"><Mail className="w-5 h-5" /></div>
                     <span className="font-mono text-sm text-gray-200">{result.email}</span>
                   </div>
                   <Copy className="w-4 h-4 text-gray-600 group-hover/item:text-white" />
@@ -347,7 +371,7 @@ export default function GhostIntel() {
               </div>
             </div>
 
-            <div className="lg:col-span-7 bg-linear-to-b from-blue-900/10 to-black border border-blue-500/20 p-8 rounded-3xl relative flex flex-col justify-between">
+            <div className="lg:col-span-7 bg-linear-to-b from-gray-900/20 to-black border border-gray-500/20 p-8 rounded-3xl relative flex flex-col justify-between">
                <div>
                  <div className="flex justify-between items-start mb-6">
                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-[10px] font-bold uppercase tracking-widest border border-blue-500/20">
@@ -361,13 +385,20 @@ export default function GhostIntel() {
                  </div>
                </div>
                <button onClick={() => navigator.clipboard.writeText(result.opener)}
-                 className="w-full py-4 bg-blue-600/10 hover:bg-blue-600 border border-blue-500/20 hover:border-blue-500 rounded-xl font-bold text-blue-400 hover:text-white transition-all flex items-center justify-center gap-2">
+                 className="w-full py-4 bg-gray-800/50 hover:bg-gray-700 border border-white/10 hover:border-white/20 rounded-xl font-bold text-gray-300 hover:text-white transition-all flex items-center justify-center gap-2">
                  <Copy className="w-4 h-4" /> Copy to Clipboard
                </button>
             </div>
           </div>
         </section>
       )}
+
+      {/* Tiny Minimalist Footer */}
+      <footer className="relative z-10 w-full mt-auto py-8 text-center border-t border-white/5 opacity-50 hover:opacity-100 transition-opacity">
+        <p className="text-gray-500 text-xs font-mono tracking-widest uppercase">
+          Ghost Intel © 2026 • Secured on Base Sepolia
+        </p>
+      </footer>
 
       {/* --- MODALS --- */}
 
@@ -382,7 +413,6 @@ export default function GhostIntel() {
               <p className="text-gray-400">0.001 ETH = 1 Credit</p>
             </div>
             
-            {/* Modal Smart Button */}
             <button 
               onClick={() => {
                 if (isWrongNetwork && switchChain) {
@@ -404,7 +434,6 @@ export default function GhostIntel() {
                     ? "Confirming..." 
                     : "Confirm Purchase"}
             </button>
-
           </div>
         </div>
       )}
@@ -416,7 +445,7 @@ export default function GhostIntel() {
             <button onClick={() => setShowProfileModal(false)} className="absolute top-4 right-4 text-gray-500 hover:text-white"><X className="w-5 h-5" /></button>
             
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-3 bg-blue-600/20 rounded-full text-blue-500"><User className="w-6 h-6" /></div>
+              <div className="p-3 bg-gray-800 rounded-full text-gray-300"><User className="w-6 h-6" /></div>
               <div>
                 <h2 className="text-xl font-bold text-white">Ghost ID</h2>
                 <p className="text-xs font-mono text-gray-500">{address}</p>
@@ -436,8 +465,8 @@ export default function GhostIntel() {
             </div>
 
             <div className="space-y-4">
-              <div className="bg-blue-900/10 border border-blue-500/20 p-4 rounded-xl">
-                <div className="flex items-center gap-2 text-blue-400 mb-2"><Users className="w-4 h-4" /> <span className="text-xs font-bold uppercase">Your Referral Network</span></div>
+              <div className="bg-gray-900/30 border border-gray-500/20 p-4 rounded-xl">
+                <div className="flex items-center gap-2 text-gray-300 mb-2"><Users className="w-4 h-4" /> <span className="text-xs font-bold uppercase">Your Referral Network</span></div>
                 {referralInfo && referralInfo[0] ? (
                   <div className="flex justify-between items-center bg-black/50 p-3 rounded-lg border border-white/5">
                     <div><p className="text-xs text-gray-400">Your Code</p><p className="text-lg font-mono font-bold text-white">{referralInfo[0]}</p></div>
@@ -445,8 +474,8 @@ export default function GhostIntel() {
                   </div>
                 ) : (
                   <div className="flex gap-2">
-                    <input type="text" placeholder="Create code (e.g. GHOST007)" className="bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm w-full outline-none focus:border-blue-500" value={myNewCode} onChange={(e) => setMyNewCode(e.target.value)} />
-                    <button onClick={handleCreateCode} disabled={isTxPending} className="bg-blue-600 px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-500">Create</button>
+                    <input type="text" placeholder="Create code (e.g. GHOST007)" className="bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm w-full outline-none focus:border-gray-500 text-white" value={myNewCode} onChange={(e) => setMyNewCode(e.target.value)} />
+                    <button onClick={handleCreateCode} disabled={isTxPending} className="bg-white text-black px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors">Create</button>
                   </div>
                 )}
               </div>
@@ -454,8 +483,8 @@ export default function GhostIntel() {
               <div className="bg-white/5 p-4 rounded-xl">
                  <p className="text-xs text-gray-400 mb-2">Redeem a Referral Code (+Bonus Credits)</p>
                  <div className="flex gap-2">
-                    <input type="text" placeholder="Enter friend's code..." className="bg-black border border-white/10 rounded-lg px-3 py-2 text-sm w-full outline-none focus:border-white" value={friendCode} onChange={(e) => setFriendCode(e.target.value)} />
-                    <button onClick={handleUseCode} disabled={isTxPending} className="bg-white text-black px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-200">Redeem</button>
+                    <input type="text" placeholder="Enter friend's code..." className="bg-black border border-white/10 rounded-lg px-3 py-2 text-sm w-full outline-none focus:border-white text-white" value={friendCode} onChange={(e) => setFriendCode(e.target.value)} />
+                    <button onClick={handleUseCode} disabled={isTxPending} className="bg-white text-black px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors">Redeem</button>
                  </div>
               </div>
             </div>
